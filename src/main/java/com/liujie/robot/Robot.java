@@ -300,11 +300,6 @@ public class Robot {
         TuLingGlobalResult tuLingGlobalResultWeater = null;   //查询天气时统一返回对象
         globalCycle:
         while (true) {
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
             //检查新消息
             String retcodeStr = null;
@@ -535,6 +530,11 @@ public class Robot {
 
                 //重新从接收到的消息里面获取接收最新消息需要的syncKeyMap
                 syncKeyMap = JSONObject.parseObject(JSONObject.toJSONString(getKeyMessageMap.get("SyncCheckKey")), Map.class);
+            }
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
