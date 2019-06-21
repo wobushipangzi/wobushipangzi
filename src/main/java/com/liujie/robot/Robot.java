@@ -34,12 +34,21 @@ public class Robot {
     public static void main(String[] args) {
 
         final List<String> apiList = new ArrayList<>();
-        apiList.add("");
-        apiList.add("");
-        apiList.add("");
-        apiList.add("");
-        apiList.add("");
-        
+        apiList.add("35c35802633a4092923d4a302473267d");
+        apiList.add("7098fdc7da1d45f38a22d87a9e23f364");
+        apiList.add("a678c77e6fb248d6beede8987bb616d7");
+        apiList.add("9e79506f0f9f4a0582f1525cc858bc61");
+        apiList.add("0a8cb64588b5456a99fd3dcc51f3dc1b");
+        apiList.add("23c3488aac50441bb6de68d99c711280");
+        apiList.add("4a0488cdce684468b95591a641f0971d");
+        apiList.add("7c8cdb56b0dc4450a8deef30a496bd4c");
+        apiList.add("37caebb606414754ac902bb4f32aeff9");
+        apiList.add("60a7aca5461b40aa9ff138e436ad412f");
+        apiList.add("fa3f411eaf1c41fe98f34b231c38365d");
+        apiList.add("a99a4b7a2cc740da81f67eb25c5337ef");
+        apiList.add("9b9662b726f3474f9574cd90fd78f4d8");
+        apiList.add("453b2da4ec4f4bec947fda36f6e1eedf");
+        apiList.add("8edce3ce905a4c1dbb965e6b35c3834d");
 
         //生成登录微信的二维码
         String uuid = null;
@@ -220,6 +229,12 @@ public class Robot {
                     String rouseKey = "huanxing" + randomUserName;
                     jedis.setex(rouseKey, 12 * 60 * 60,String.valueOf(new Date().getTime()));
                     jedis.close();
+
+                    try {
+                        Thread.sleep(1000*2);
+                    } catch (InterruptedException e) {
+                        System.out.println("唤醒线程睡眠异常");
+                    }
                 }
             }
         }).start();
@@ -232,8 +247,8 @@ public class Robot {
             @Override
             public void run() {
                 while (true){
-                    //自动回复开启的情况下 才实现该功能
-                    if(sumSwitch == true){
+                    //自动回复开启的情况下
+                    if(sumSwitch){
                         /**
                          * 如果对方三分钟没有说话  自动回复
                          */
@@ -241,17 +256,20 @@ public class Robot {
                         Jedis jedis = JedisUtils.getJedis();
                         //获取key
                         for (String fromUserNameKey : fromUserNameSet) {
-                            if(StringUtils.isNotEmpty(jedis.get(fromUserNameKey)) && !(userName.equals(fromUserNameKey))){
-                                //获取当前时间戳
-                                long currentTime = new Date().getTime();
-                                //获取redis存放的时间戳
-                                long timeValue = Long.valueOf(jedis.get(fromUserNameKey));
-                                //如果会话时间超过三分钟  自动回复
-                                if((currentTime - timeValue) > (1000*60*3-1050) && (currentTime - timeValue) < (1000*60*3+1050)){
-                                    //发送自动回复消息 并且结束循环
-                                    String tulreplyMessage = "咦？你都三分钟没说话了，再不说话我走了哦[奸笑]";
-                                    if(!(userName.equals(fromUserNameKey))){
-                                        WeiXinUtils.sendWXMessage(skey, wxsid, wxuin, userName, fromUserNameKey, tulreplyMessage);
+                            //自定义回复关闭 并且复读机功能关闭 才实现此功能
+                            if(!customSwitch && !repeaterSwitch){
+                                if(StringUtils.isNotEmpty(jedis.get(fromUserNameKey)) && !(userName.equals(fromUserNameKey))){
+                                    //获取当前时间戳
+                                    long currentTime = new Date().getTime();
+                                    //获取redis存放的时间戳
+                                    long timeValue = Long.valueOf(jedis.get(fromUserNameKey));
+                                    //如果会话时间超过三分钟  自动回复
+                                    if((currentTime - timeValue) > (1000*60*3-1050) && (currentTime - timeValue) < (1000*60*3+1050)){
+                                        //发送自动回复消息 并且结束循环
+                                        String tulreplyMessage = "咦？你都三分钟没说话了，再不说话我走了哦[奸笑]";
+                                        if(!(userName.equals(fromUserNameKey))){
+                                            WeiXinUtils.sendWXMessage(skey, wxsid, wxuin, userName, fromUserNameKey, tulreplyMessage);
+                                        }
                                     }
                                 }
                             }
@@ -259,6 +277,7 @@ public class Robot {
                             /**
                              * 以下功能为多次唤醒功能 三分钟一次
                              */
+
                             //获取待唤醒人的时间戳
                             String rouseKey = "huanxing" + remarkRandomUserNameMap.get(remarkUserName);
                             if(StringUtils.isNotEmpty(jedis.get(rouseKey))){
@@ -288,7 +307,9 @@ public class Robot {
         List<String> noReply = new ArrayList<>();
         //noReply.add("段朋");
         //noReply.add("晖宝宝");
-        
+        noReply.add("国美~辰辉");
+        noReply.add("国美~韩达维");
+        //noReply.add("邓博阳");
 
 
         /**
@@ -316,11 +337,76 @@ public class Robot {
                  */
                 WXGlobalResult wxGlobalResult = WeiXinUtils.getNewMessage(skey, wxsid, wxuin, syncKeyMap, nickRandomUserNameMap, remarkRandomUserNameMap, userName);
 
+
+                /**
+                 * 监测群消息是否有小程序
+                 */
+                /*if(wxGlobalResult != null && StringUtils.isNotEmpty(wxGlobalResult.getFromUserName())){
+                    String subFromUserName = wxGlobalResult.getFromUserName().substring(0, 2);
+                    if ("@@".equals(subFromUserName) && StringUtils.isNotEmpty(wxGlobalResult.getSendTulMessage()) && !(userName.equals(wxGlobalResult.getFromUserName())) && ("49".equals(wxGlobalResult.getMsgType()) && ("33".equals(wxGlobalResult.getAppMsgType())))) {
+                        if(StringUtils.isNotEmpty(wxGlobalResult.getSendTulMessage())){
+
+                            String[] splitMessage = wxGlobalResult.getSendTulMessage().split(":<br/>");
+                            //获取发送消息的人
+                            String fromUserName = splitMessage[0];
+                            //获取群成员信息
+                            FlockGlobeResult flockMessage = WeiXinUtils.getFlockMessage(skey, wxsid, wxuin, pass_ticket, deviceID, wxGlobalResult, splitMessage);
+                            //获取redis中存储的违规次数
+                            Jedis jedis1 = JedisUtils.getJedis();
+                            String countStr = jedis1.get(fromUserName);
+                            if(StringUtils.isEmpty(countStr)){
+                                countStr = "1";
+                            }
+                            Integer count = Integer.valueOf(countStr);
+                            jedis1.close();
+                            if(userName.equals(flockMessage.getUserNameList().get(0)) && count < 3){
+                                String nickName = flockMessage.getNickName();
+                                //发送提示信息
+                                //WeiXinUtils.sendWXMessage(skey,wxsid,wxuin,userName,wxGlobalResult.getFromUserName(),"@"+nickName+"发小程序" + count + "次，超过三次将移出群聊");
+                                System.out.println("@"+nickName+"发小程序" + count + "次，超过三次将移出群聊");
+                                //把用户信息和次数存入redis
+                                Jedis jedis = JedisUtils.getJedis();
+                                jedis.set(fromUserName,String.valueOf(count + 1));
+                                jedis.close();
+                            }
+                            if(userName.equals(flockMessage.getUserNameList().get(0)) && count > 3){
+                                String nickName = flockMessage.getNickName();
+                                //发送提示信息
+                                //WeiXinUtils.sendWXMessage(skey,wxsid,wxuin,userName,wxGlobalResult.getFromUserName(),"@"+nickName+"发小程序" + count + "次，现将你移出群聊");
+                                System.out.println("@"+nickName+"发小程序" + count + "次，现将你移出群聊");
+                                //清空redis
+                                Jedis jedis = JedisUtils.getJedis();
+                                jedis.del(fromUserName);
+                                jedis.close();
+
+                                // 执行移出群聊操作
+                                String kickPersonUrl = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxupdatechatroom?fun=delmember&pass_ticket=" + pass_ticket;
+                                HashMap<String, Object> delPerSonMap = new HashMap<>();
+                                HashMap<String, String> baseRequestMap = new HashMap<>();
+
+                                deviceID = "e" + Random.getRandomNum(15);
+                                baseRequestMap.put("DeviceID",deviceID);
+                                baseRequestMap.put("Sid",wxsid);
+                                baseRequestMap.put("Skey",skey);
+                                baseRequestMap.put("Uin",wxuin);
+
+                                delPerSonMap.put("BaseRequest", baseRequestMap);
+                                delPerSonMap.put("ChatRoomName", wxGlobalResult.getFromUserName());
+                                delPerSonMap.put("DelMemberList", fromUserName);
+
+                                String delPerSonJson = JSONObject.toJSONString(delPerSonMap);
+                                String delResponse = HttpClientUtils.httpPostJsonRestRequest(kickPersonUrl, delPerSonJson);
+                                System.out.println("踢人：==>" + delResponse);
+                                //解析
+                            }
+                        }
+                    }
+                }*/
+
                 /**
                  * 自动回复开关
                  */
                 autoResponse(skey, wxsid, wxuin, userName, wxGlobalResult);
-
 
                 /**
                  * 天气查询功能
@@ -372,16 +458,18 @@ public class Robot {
                          */
                         //接收到的消息为
                         String sendTulMessage = wxGlobalResult.getSendTulMessage();
-                        String[] splitMessage = sendTulMessage.split(":<br/>");
-
-                        //获取群信息
-                        FlockGlobeResult flockMessage = WeiXinUtils.getFlockMessage(skey, wxsid, wxuin, pass_ticket, deviceID, wxGlobalResult, splitMessage);
-                        String flockName = flockMessage.getFlockName();
-                        String nickName = flockMessage.getNickName();
-                        System.out.println("[" + flockName + "] ["+ nickName + "] 发来微信消息：==> " + splitMessage[1]);
+                        if(StringUtils.isNotEmpty(sendTulMessage)){
+                            String[] splitMessage = sendTulMessage.split(":<br/>");
+                            //获取群成员信息
+                            FlockGlobeResult flockMessage = WeiXinUtils.getFlockMessage(skey, wxsid, wxuin, pass_ticket, deviceID, wxGlobalResult, splitMessage);
+                            String flockName = flockMessage.getFlockName();
+                            String nickName = flockMessage.getNickName();
+                            String displayName = flockMessage.getDisplayName();
+                            if(splitMessage.length > 1){
+                                System.out.println("[" + flockName + "] ["+ (StringUtils.isNotEmpty(displayName)? displayName : nickName) + "] 发来微信消息：==> " + splitMessage[1]);
+                            }
+                        }
                     }
-
-
                 }
 
 
@@ -523,13 +611,15 @@ public class Robot {
                         break TuLing;
                     }
                 }
-                Map getKeyMessageMap = JSONObject.parseObject(wxGlobalResult.getGetMessage(), Map.class);
+                if (StringUtils.isNotEmpty(wxGlobalResult.getGetMessage())){
+                    Map getKeyMessageMap = JSONObject.parseObject(wxGlobalResult.getGetMessage(), Map.class);
 
-                //重新从接收到的消息里面获取消息检查的syncKey
-                syncKey = WeiXinUtils.getSyncKeyTwo(getKeyMessageMap);
+                    //重新从接收到的消息里面获取消息检查的syncKey
+                    syncKey = WeiXinUtils.getSyncKeyTwo(getKeyMessageMap);
 
-                //重新从接收到的消息里面获取接收最新消息需要的syncKeyMap
-                syncKeyMap = JSONObject.parseObject(JSONObject.toJSONString(getKeyMessageMap.get("SyncCheckKey")), Map.class);
+                    //重新从接收到的消息里面获取接收最新消息需要的syncKeyMap
+                    syncKeyMap = JSONObject.parseObject(JSONObject.toJSONString(getKeyMessageMap.get("SyncCheckKey")), Map.class);
+                }
             }
             try {
                 Thread.sleep(2000);

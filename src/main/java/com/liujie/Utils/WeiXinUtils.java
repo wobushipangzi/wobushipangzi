@@ -142,8 +142,8 @@ public class WeiXinUtils {
 
         String getMessage = HttpClientUtils.httpPostJsonRestRequest(getMessageUrl, getMessageJson);
 
-        //解析新消息
-        List msgList = JSONObject.parseObject(JSONObject.toJSONString(JSONObject.parseObject(getMessage, Map.class).get("AddMsgList")),List.class);
+        //System.out.println("获取到的信息为：==> " + getMessage);
+
         //发送消息人
         String fromUserName = null;
         //消息内容 iso-8859-1  需要转码
@@ -152,58 +152,66 @@ public class WeiXinUtils {
         String msgType = null;
         //消息编号
         String msgId = null;
-
-        WXMessage:
-        for (Object o : msgList) {
-            content = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("Content").toString();
-            fromUserName = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("FromUserName").toString();
-
-            //如果获取到了消息，结束循环
-            if (StringUtils.isNotEmpty(content) && StringUtils.isNotEmpty(fromUserName)) {
-                msgType = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("MsgType").toString();
-                msgId = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("MsgId").toString();
-                break WXMessage;
-            }
-        }
-
-        //反转Map集合  通过value拿到key
-        String nickName = null;
-        for (String nickRandomUserNameKey : nickRandomUserNameMap.keySet()) {
-            if(StringUtils.isNotEmpty(fromUserName) && fromUserName.equals(nickRandomUserNameMap.get(nickRandomUserNameKey))){
-                nickName = nickRandomUserNameKey;
-                if(StringUtils.isBlank(nickName)){
-                    nickName = "";
-                }
-            }
-        }
-
-        String remarkName = null;
-        for (String remarkRandomUserNameMapKey : remarkRandomUserNameMap.keySet()) {
-            if(StringUtils.isNotEmpty(fromUserName) && fromUserName.equals(remarkRandomUserNameMap.get(remarkRandomUserNameMapKey))){
-                remarkName = remarkRandomUserNameMapKey;
-                if(StringUtils.isBlank(remarkName)){
-                    remarkName = "";
-                }
-            }
-        }
-
-
+        //小程序编号
+        String appMsgType = null;
         String sendTulMessage = null;
-        if (StringUtils.isNotEmpty(content)) {
-            //如果微信返回字符编码为ISO-8859-1 需要转换为UTF-8
-            sendTulMessage = TransCoding.transcoding(content);
-            if(userName.equals(fromUserName)){
-                System.out.println("我回复微信消息：==>" + sendTulMessage);
-            }else if(!("@@".equals(fromUserName.substring(0,2)))){
-                System.out.println(remarkName + "[" + nickName + "]发来微信消息：==>" + sendTulMessage);
+        if(StringUtils.isNotEmpty(getMessage) && JSONObject.parseObject(getMessage, Map.class) != null && StringUtils.isNotEmpty(JSONObject.parseObject(getMessage, Map.class).get("AddMsgList").toString())){
+            //解析新消息
+            List msgList = JSONObject.parseObject(JSONObject.toJSONString(JSONObject.parseObject(getMessage, Map.class).get("AddMsgList")),List.class);
+
+            WXMessage:
+            for (Object o : msgList) {
+                content = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("Content").toString();
+                fromUserName = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("FromUserName").toString();
+
+                //如果获取到了消息，结束循环
+                if (StringUtils.isNotEmpty(content) && StringUtils.isNotEmpty(fromUserName)) {
+                    msgType = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("MsgType").toString();
+                    msgId = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("MsgId").toString();
+                    appMsgType = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class).get("AppMsgType").toString();
+                    break WXMessage;
+                }
+            }
+
+            //反转Map集合  通过value拿到key
+            String nickName = null;
+            for (String nickRandomUserNameKey : nickRandomUserNameMap.keySet()) {
+                if(StringUtils.isNotEmpty(fromUserName) && fromUserName.equals(nickRandomUserNameMap.get(nickRandomUserNameKey))){
+                    nickName = nickRandomUserNameKey;
+                    if(StringUtils.isBlank(nickName)){
+                        nickName = "";
+                    }
+                }
+            }
+
+            String remarkName = null;
+            for (String remarkRandomUserNameMapKey : remarkRandomUserNameMap.keySet()) {
+                if(StringUtils.isNotEmpty(fromUserName) && fromUserName.equals(remarkRandomUserNameMap.get(remarkRandomUserNameMapKey))){
+                    remarkName = remarkRandomUserNameMapKey;
+                    if(StringUtils.isBlank(remarkName)){
+                        remarkName = "";
+                    }
+                }
+            }
+
+            if (StringUtils.isNotEmpty(content)) {
+                //如果微信返回字符编码为ISO-8859-1 需要转换为UTF-8
+                sendTulMessage = TransCoding.transcoding(content);
+                if(userName.equals(fromUserName)){
+                    System.out.println("我回复微信消息：==>" + sendTulMessage);
+                }else if(!("@@".equals(fromUserName.substring(0,2)))){
+                    System.out.println("[" + (StringUtils.isNotEmpty(remarkName)? remarkName : nickName) + "] 发来微信消息：==>" + sendTulMessage);
+                }
             }
         }
+
 
         wxGlobalResult.setFromUserName(fromUserName);
         wxGlobalResult.setSendTulMessage(sendTulMessage);
         wxGlobalResult.setGetMessage(getMessage);
         wxGlobalResult.setMsgType(msgType);
         wxGlobalResult.setMsgId(msgId);
+        wxGlobalResult.setAppMsgType(appMsgType);
         return wxGlobalResult;
     }
 
@@ -324,7 +332,7 @@ public class WeiXinUtils {
                             break reCall;
                         }
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
-                        String reCallMessage = dateFormat.format(new Date()) + " " + remarkName + "[" + nickName + "]撤回消息 ==> " + jedis.get(key);
+                        String reCallMessage = dateFormat.format(new Date()) + " [" + (StringUtils.isNotEmpty(remarkName)? remarkName : nickName) + "] 撤回消息 ==> " + jedis.get(key);
                         jedis.close();
                         //发送给文件传输助手
                         WeiXinUtils.sendWXMessage(skey, wxsid, wxuin, userName, "filehelper", reCallMessage);
@@ -341,16 +349,19 @@ public class WeiXinUtils {
                         String[] splitMessage = sendTulMessage.split(":<br/>");
                         String deviceID = "e" + Random.getRandomNum(15);
                         /**
-                         * 获取群信息
+                         * 获取群成员信息
                          */
                         FlockGlobeResult flockMessage = getFlockMessage(skey, wxsid, wxuin, pass_ticket, deviceID, wxGlobalResult, splitMessage);
 
                         String flockName = flockMessage.getFlockName();
                         String nickName = flockMessage.getNickName();
+                        String displayName = flockMessage.getDisplayName();
 
                         SimpleDateFormat dateFormat = new SimpleDateFormat("yy-MM-dd HH:mm:ss");
-                        String reCallMessage = dateFormat.format(new Date()) + " [" + flockName + "] [" + nickName + "]撤回消息 ==> " + splitMessage[1];
-                        WeiXinUtils.sendWXMessage(skey,wxsid,wxuin,userName,"filehelper", reCallMessage);
+                        if(splitMessage.length > 1){
+                            String reCallMessage = dateFormat.format(new Date()) + " [" + flockName + "] [" + (StringUtils.isNotEmpty(displayName)? displayName : nickName) + "]撤回消息 ==> " + splitMessage[1];
+                            WeiXinUtils.sendWXMessage(skey,wxsid,wxuin,userName,"filehelper", reCallMessage);
+                        }
                     }
                 }
                 break reCall;
@@ -361,7 +372,7 @@ public class WeiXinUtils {
 
 
     /**
-     * 获取群消息
+     * 获取群成员信息
      * @param skey
      * @param wxsid
      * @param wxuin
@@ -390,10 +401,13 @@ public class WeiXinUtils {
         String flockJson = JSONObject.toJSONString(flockMap);
         String flockUrl = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxbatchgetcontact?pass_ticket=" + pass_ticket + "&type=ex";
         String flockStr = HttpClientUtils.httpPostJsonRestRequest(flockUrl, flockJson);
+        //System.out.println("获取到的群消息为：==>" + flockStr);
         //解析群信息
         Map flockMessageMap = JSONObject.parseObject(flockStr, Map.class);
         List contactList = (List) flockMessageMap.get("ContactList");
         String nickName = null;
+        String displayName = null;
+        List<String> userNameList = new ArrayList<>();
         for (Object o : contactList) {
             Map contactMap = JSONObject.parseObject(JSONObject.toJSONString(o), Map.class);
             String flockName = contactMap.get("NickName").toString();
@@ -405,12 +419,16 @@ public class WeiXinUtils {
                 if(splitMessage [0].equals(memberMap.get("UserName"))){
                     nickName = memberMap.get("NickName").toString();
                     nickName = TransCoding.transcoding(nickName);
+                    displayName = memberMap.get("DisplayName").toString();
+                    displayName = TransCoding.transcoding(displayName);
                 }
+                userNameList.add(TransCoding.transcoding(memberMap.get("UserName").toString()));
             }
             flockGlobeResult.setFlockName(flockName);
             flockGlobeResult.setNickName(nickName);
+            flockGlobeResult.setUserNameList(userNameList);
+            flockGlobeResult.setDisplayName(displayName);
         }
         return flockGlobeResult;
     }
-
 }

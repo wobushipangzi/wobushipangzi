@@ -12,6 +12,8 @@ public class WXGlobalResult {
 
     private String msgId;
 
+    private String appMsgType;
+
     public String getFromUserName() {
         return fromUserName;
     }
@@ -50,5 +52,13 @@ public class WXGlobalResult {
 
     public void setMsgId(String msgId) {
         this.msgId = msgId;
+    }
+
+    public String getAppMsgType() {
+        return appMsgType;
+    }
+
+    public void setAppMsgType(String appMsgType) {
+        this.appMsgType = appMsgType;
     }
 }
