@@ -14,6 +14,8 @@ public class JedisUtils {
     private static int maxwaitmillis;
     private static String host;
     private static int port;
+    private static String password;
+    private static int timeOut;
 
     /*读取jedis.properties配置文件*/
     static{
@@ -22,6 +24,8 @@ public class JedisUtils {
         maxwaitmillis = Integer.parseInt(rb.getString("maxwaitmillis"));
         host = rb.getString("host");
         port = Integer.parseInt(rb.getString("port"));
+        password = rb.getString("password");
+        timeOut = Integer.parseInt(rb.getString("timeOut"));
     }
 
     /*创建连接池*/
@@ -29,7 +33,7 @@ public class JedisUtils {
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
         jedisPoolConfig.setMaxTotal(maxtotal);
         jedisPoolConfig.setMaxWaitMillis(maxwaitmillis);
-        jedisPool = new JedisPool(jedisPoolConfig,host,port);
+        jedisPool = new JedisPool(jedisPoolConfig,host,port,timeOut,password);
     }
 
     /*获取jedis*/

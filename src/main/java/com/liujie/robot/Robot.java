@@ -428,14 +428,14 @@ public class Robot {
                  * 开关消息防撤回功能
                  */
                 if(userName.equals(wxGlobalResult.getFromUserName()) && "4".equals(wxGlobalResult.getSendTulMessage())){
-                    if(reCallSwitch == false){
+                    if(!reCallSwitch){
                         WeiXinUtils.sendWXMessage(skey, wxsid, wxuin, userName, userName, "当前已经是关闭防撤回状态！");
                     }else {
                         WeiXinUtils.sendWXMessage(skey, wxsid, wxuin, userName, userName, "防撤回功能已关闭！");
                         reCallSwitch = false;
                     }
                 }else if(userName.equals(wxGlobalResult.getFromUserName()) && "3".equals(wxGlobalResult.getSendTulMessage())){
-                    if(reCallSwitch == true){
+                    if(reCallSwitch){
                         WeiXinUtils.sendWXMessage(skey, wxsid, wxuin, userName, userName, "当前已经是开启防撤回状态！");
                     }else {
                         WeiXinUtils.sendWXMessage(skey, wxsid, wxuin, userName, userName, "防撤回功能已开启！");
