@@ -70,8 +70,9 @@ public class Robot {
         String userParameters = null;
         try {
             userParameters = HttpClientUtils.httpGetRequest(loginSuccessUrl);
+            //System.out.println("获取用户重要参数：==>" + userParameters);
         } catch (IOException e) {
-            System.out.println("获取用户重要参数异常");
+            //System.out.println("获取用户重要参数异常");
         }
 
         String[] skeys = userParameters.split("skey");
@@ -181,61 +182,61 @@ public class Robot {
         //设置要唤醒人的备注名字
         final String remarkUserName = "晖宝宝";
         //设置将要在几点钟唤醒
-        final Integer rouseTime = 62500; //每两位数分别对应24小时制的时分秒
-        final Integer hour = 6;  //设置时
+        final Integer rouseTime = 82500; //每两位数分别对应24小时制的时分秒
+        final Integer hour = 8;  //设置时
         final Integer minute = 25;
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true){
+            while (true){
 
-                    Long sleepSeconds = null; //睡眠时间
+                Long sleepSeconds = null; //睡眠时间
 
-                    //获取当前的系统时间
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("HHmmss");
-                    Integer nowTime = Integer.valueOf(dateFormat.format(new Date()));
-                    if(nowTime < rouseTime){
-                        //证明是在当天
-                        sleepSeconds = TimeUtils.getsomeSeconds(0, hour, minute);
-                    }else if(nowTime > rouseTime){   //防止一条消息重复发送多次，不设置等于的情况
-                        //证明是在设定之间之后 需要隔天
-                        sleepSeconds = TimeUtils.getsomeSeconds(1, hour, minute);
-                    }
-                    //睡眠对应时间 在设定时间唤醒
-                    try {
-                        Thread.sleep(sleepSeconds * 1000);
-                    } catch (InterruptedException e) {
-                        System.out.println("唤醒功能睡眠异常");
-                    }
-
-                    //通过备注名称拿到发送消息需要的名称
-                    String randomUserName = remarkRandomUserNameMap.get(remarkUserName);
-                    //设置发送内容
-                    String sendWXMessageStr = "小仙女赶紧起床了 快看看今天天气怎么样 ";
-                    String sendTulMessage = "今天太原天气怎么样";
-                    TuLingGlobalResult tuLingGlobalResult = null;
-                    try {
-                        tuLingGlobalResult = TuLingUtils.sendMessageToTul(i, apiList, sendTulMessage);
-                    } catch (IOException e) {
-                        System.out.println("唤醒功能发送图灵机器人消息异常");
-                    }
-                    String tulreplyMessage = tuLingGlobalResult.getTulreplyMessage();
-                    sendWXMessageStr = sendWXMessageStr + tulreplyMessage;
-                    WeiXinUtils.sendWXMessage(skey,wxsid,wxuin,userName,randomUserName,sendWXMessageStr);
-
-                    //把唤醒人信息存入redis
-                    Jedis jedis = JedisUtils.getJedis();
-                    //组装key
-                    String rouseKey = "huanxing" + randomUserName;
-                    jedis.setex(rouseKey, 12 * 60 * 60,String.valueOf(new Date().getTime()));
-                    jedis.close();
-
-                    try {
-                        Thread.sleep(1000*2);
-                    } catch (InterruptedException e) {
-                        System.out.println("唤醒线程睡眠异常");
-                    }
+                //获取当前的系统时间
+                SimpleDateFormat dateFormat = new SimpleDateFormat("HHmmss");
+                Integer nowTime = Integer.valueOf(dateFormat.format(new Date()));
+                if(nowTime < rouseTime){
+                    //证明是在当天
+                    sleepSeconds = TimeUtils.getsomeSeconds(0, hour, minute);
+                }else if(nowTime > rouseTime){   //防止一条消息重复发送多次，不设置等于的情况
+                    //证明是在设定之间之后 需要隔天
+                    sleepSeconds = TimeUtils.getsomeSeconds(1, hour, minute);
                 }
+                //睡眠对应时间 在设定时间唤醒
+                try {
+                    Thread.sleep(sleepSeconds * 1000);
+                } catch (InterruptedException e) {
+                    System.out.println("唤醒功能睡眠异常");
+                }
+
+                //通过备注名称拿到发送消息需要的名称
+                String randomUserName = remarkRandomUserNameMap.get(remarkUserName);
+                //设置发送内容
+                String sendWXMessageStr = "小仙女赶紧起床了 快看看今天天气怎么样 ";
+                String sendTulMessage = "今天浮山天气怎么样";
+                TuLingGlobalResult tuLingGlobalResult = null;
+                try {
+                    tuLingGlobalResult = TuLingUtils.sendMessageToTul(i, apiList, sendTulMessage);
+                } catch (IOException e) {
+                    System.out.println("唤醒功能发送图灵机器人消息异常");
+                }
+                String tulreplyMessage = tuLingGlobalResult.getTulreplyMessage();
+                sendWXMessageStr = sendWXMessageStr + tulreplyMessage;
+                WeiXinUtils.sendWXMessage(skey,wxsid,wxuin,userName,randomUserName,sendWXMessageStr);
+
+                //把唤醒人信息存入redis
+                Jedis jedis = JedisUtils.getJedis();
+                //组装key
+                String rouseKey = "huanxing" + randomUserName;
+                jedis.setex(rouseKey, 12 * 60 * 60,String.valueOf(new Date().getTime()));
+                jedis.close();
+
+                try {
+                    Thread.sleep(1000*2);
+                } catch (InterruptedException e) {
+                    System.out.println("唤醒线程睡眠异常");
+                }
+            }
             }
         }).start();
 
